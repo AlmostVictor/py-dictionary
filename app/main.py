@@ -34,6 +34,7 @@ class Dictionary:
 
         if self.reserved_count > self.real_size * 0.66:
             old_nodes = [node for node in self.hash_table if node]
+            self.reserved_count = 0
             self.real_size *= 2
             self.hash_table = [None] * self.real_size
             for node in old_nodes:
@@ -74,3 +75,6 @@ class Dictionary:
             return self.__getitem__(key)
         except KeyError:
             return default_value
+
+    def __iter__(self) -> "Dictionary":
+        return self

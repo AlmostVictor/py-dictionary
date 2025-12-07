@@ -14,11 +14,21 @@ class Dictionary:
         self.reserved_count = 0
         self.real_size = 8
 
+    def find_index(self, key: Hashable) -> int | None:
+        idx = hash(key) % self.real_size
+        for _ in range(self.real_size):
+            node = self.hash_table[idx]
+            if node and node.key == key:
+                return idx
+            else:
+                idx = (idx + 1) % self.real_size
+        return None
+
     def save(self, saving_node: Node) -> None:
-        for existed_node in self.hash_table:
-            if existed_node and existed_node.key == saving_node.key:
-                existed_node.value = saving_node.value
-                return
+        idx_duplicate = self.find_index(saving_node)
+        if idx_duplicate:
+            self.hash_table[idx_duplicate].value = saving_node.value
+            return
 
         idx = saving_node.hash % self.real_size
         for _ in range(self.real_size):
@@ -41,14 +51,9 @@ class Dictionary:
                 self.save(node)
 
     def __getitem__(self, key: Hashable) -> Any:
-        idx = hash(key) % self.real_size
-        for _ in range(self.real_size):
-            node = self.hash_table[idx]
-            if node and node.key == key:
-                return node.value
-            else:
-                idx = (idx + 1) % self.real_size
-
+        searched_key = self.find_index(key)
+        if searched_key:
+            return self.hash_table[searched_key].value
         raise KeyError(key)
 
     def __len__(self) -> int:
@@ -60,21 +65,34 @@ class Dictionary:
         self.real_size = 8
 
     def __delitem__(self, key: Hashable) -> None:
-        idx = hash(key) % self.real_size
-        for node in range(self.real_size):
-            node = self.hash_table[idx]
-            if node and node.key == key:
-                node = None
-            else:
-                idx = (idx + 1) % self.real_size
-
+        searched_key = self.find_index(key)
+        if searched_key:
+            self.hash_table[searched_key] = None
         raise KeyError(key)
 
-    def get(self, key: Hashable, default_value: Any = None) -> Any:
+    def get(self, key: Hashable, default: Any = None) -> Any:
         try:
             return self.__getitem__(key)
         except KeyError:
-            return default_value
+            return default
 
-    def __iter__(self) -> "Dictionary":
-        return self
+    def pop(self, key: Hashable, *default) -> Any:
+        searched_key = self.find_index(key)
+        if searched_key:
+            output = self.hash_table[searched_key].value
+            self.hash_table[searched_key] = None
+            return output
+
+        elif default:
+            return default
+
+        raise KeyError(key)
+
+    def update(self, array: dict) -> None:
+        for key, value in array:
+            self.__setitem__(key, value)
+
+    def __iter__(self) -> Any:
+        for node in self.hash_table:
+            if node is not None:
+                yield node.key

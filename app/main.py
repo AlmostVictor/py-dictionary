@@ -25,8 +25,8 @@ class Dictionary:
         return None
 
     def save(self, saving_node: Node) -> None:
-        idx_duplicate = self.find_index(saving_node)
-        if idx_duplicate:
+        idx_duplicate = self.find_index(saving_node.key)
+        if idx_duplicate is not None:
             self.hash_table[idx_duplicate].value = saving_node.value
             return
 
@@ -52,7 +52,7 @@ class Dictionary:
 
     def __getitem__(self, key: Hashable) -> Any:
         searched_key = self.find_index(key)
-        if searched_key:
+        if searched_key is not None:
             return self.hash_table[searched_key].value
         raise KeyError(key)
 
@@ -66,8 +66,10 @@ class Dictionary:
 
     def __delitem__(self, key: Hashable) -> None:
         searched_key = self.find_index(key)
-        if searched_key:
+        if searched_key is not None:
             self.hash_table[searched_key] = None
+            self.reserved_count -= 1
+            return
         raise KeyError(key)
 
     def get(self, key: Hashable, default: Any = None) -> Any:
@@ -76,11 +78,12 @@ class Dictionary:
         except KeyError:
             return default
 
-    def pop(self, key: Hashable, *default) -> Any:
+    def pop(self, key: Hashable, default = None) -> Any:
         searched_key = self.find_index(key)
-        if searched_key:
+        if searched_key is not None:
             output = self.hash_table[searched_key].value
             self.hash_table[searched_key] = None
+            self.reserved_count -= 1
             return output
 
         elif default:
@@ -89,7 +92,7 @@ class Dictionary:
         raise KeyError(key)
 
     def update(self, array: dict) -> None:
-        for key, value in array:
+        for key, value in array.items():
             self.__setitem__(key, value)
 
     def __iter__(self) -> Any:

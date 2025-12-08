@@ -1,6 +1,11 @@
 from typing import Any, Hashable
 
 
+class Tombstone:
+    def __bool__(self) -> bool:
+        return False
+
+
 class Node:
     def __init__(self, key: Hashable, value: Any) -> None:
         self.key = key
@@ -10,7 +15,7 @@ class Node:
 
 class Dictionary:
     def __init__(self) -> None:
-        self.hash_table: list[None | Node] = [None] * 8
+        self.hash_table: list[None | Node | Tombstone] = [None] * 8
         self.reserved_count = 0
         self.real_size = 8
 
@@ -25,17 +30,19 @@ class Dictionary:
         return None
 
     def save(self, saving_node: Node) -> None:
-        idx_duplicate = self.find_index(saving_node.key)
-        if idx_duplicate is not None:
-            self.hash_table[idx_duplicate].value = saving_node.value
-            return
-
         idx = saving_node.hash % self.real_size
         for _ in range(self.real_size):
-            if self.hash_table[idx] is None:
+            node = self.hash_table[idx]
+
+            if node and node.key == saving_node.key:
+                self.hash_table[idx].value = saving_node.value
+                return
+
+            elif not node:
                 self.hash_table[idx] = saving_node
                 self.reserved_count += 1
                 return
+
             else:
                 idx = (idx + 1) % self.real_size
 
@@ -67,7 +74,7 @@ class Dictionary:
     def __delitem__(self, key: Hashable) -> None:
         searched_key = self.find_index(key)
         if searched_key is not None:
-            self.hash_table[searched_key] = None
+            self.hash_table[searched_key] = Tombstone()
             self.reserved_count -= 1
             return
         raise KeyError(key)
@@ -78,7 +85,7 @@ class Dictionary:
         except KeyError:
             return default
 
-    def pop(self, key: Hashable, default = None) -> Any:
+    def pop(self, key: Hashable, default: Any = None) -> Any:
         searched_key = self.find_index(key)
         if searched_key is not None:
             output = self.hash_table[searched_key].value
@@ -97,5 +104,5 @@ class Dictionary:
 
     def __iter__(self) -> Any:
         for node in self.hash_table:
-            if node is not None:
+            if isinstance(node, Node):
                 yield node.key

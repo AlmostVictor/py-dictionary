@@ -43,8 +43,7 @@ class Dictionary:
                 self.reserved_count += 1
                 return
 
-            else:
-                idx = (idx + 1) % self.real_size
+            idx = (idx + 1) % self.real_size
 
     def __setitem__(self, key: Hashable, value: Any) -> None:
         self.save(Node(key, value))
@@ -89,7 +88,7 @@ class Dictionary:
         searched_key = self.find_index(key)
         if searched_key is not None:
             output = self.hash_table[searched_key].value
-            self.hash_table[searched_key] = None
+            self.hash_table[searched_key] = Tombstone()
             self.reserved_count -= 1
             return output
 
